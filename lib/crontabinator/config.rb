@@ -18,12 +18,13 @@ namespace :crontabinator do
   desc "Write example config files (with '_example' appended to their names)."
   task :write_example_configs do
     run_locally do
-      execute "mkdir", "-p", "config/deploy", fetch(:crontab_templates_path)
+      execute "mkdir", "-p", "config/deploy", fetch(:crontab_templates_path), fetch(:crontab_scripts_path)
       {
         "examples/Capfile"                    => "Capfile#{fetch(:example)}",
         "examples/config/deploy.rb"           => "config/deploy#{fetch(:example)}.rb",
         "examples/config/deploy/staging.rb"   => "config/deploy/staging#{fetch(:example)}.rb",
         "examples/crontab.erb"                => "#{fetch(:crontab_templates_path)}/crontab#{fetch(:example)}.erb",
+        "examples/myscript.sh.erb"            => "#{fetch(:crontab_scripts_path)}/myscript#{fetch(:example)}.sh.erb"
       }.each do |source, destination|
         config = File.read(File.dirname(__FILE__) + "/#{source}")
         File.open("./#{destination}", 'w') { |f| f.write(config) }

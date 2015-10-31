@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'crontabinator'
-  s.version     = '0.0.0'
-  s.date        = '2015-05-27'
+  s.version     = '0.0.1'
+  s.date        = '2015-10-30'
   s.summary     = "Deploy Crontabs"
   s.description = "Deploy Crontabs using an existing Cron Daemon"
   s.authors     = ["david amick"]
@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
     "lib/crontabinator/examples/config/deploy.rb",
     "lib/crontabinator/examples/config/deploy/staging.rb",
     "lib/crontabinator/examples/crontab.erb",
+    "lib/crontabinator/examples/myscript.sh.erb"
   ]
   s.required_ruby_version  =                '>= 1.9.3'
   s.requirements           <<               "Cron Daemon"

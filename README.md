@@ -13,6 +13,7 @@ This is a Capistrano 3.x plugin, and relies on SSH access with passwordless sudo
 `cap crontabinator:write_example_configs`
 * Turn them into real configs by removing the `_example` portions of their names, and adjusting their content to fit your needs. (Later when you upgrade to a newer version of crontabinator, you can `crontabinator:write_example_configs` again and diff your current configs against the new configs to see what you need to add.)
 * Add the role `:cron` to whatever servers you would like to have crons installed upon.
+* Ensure the `script/` directory's files get set executable (E.G. using `deployinator`'s `:webserver_executeable_dirs`)
 
 ### Usage:
 `cap -T` will help remind you of the available commands, see this for more details.
@@ -25,5 +26,4 @@ This is a Capistrano 3.x plugin, and relies on SSH access with passwordless sudo
 
 ###### TODO:
 * Add a locking mechanism (lock file?) for detecting and removing crons on the server which have been removed from the Capistrano config.
-* Add a `templates/crontab/scripts.d` dir and functionality to eval .erb files and put them in `/var/www/<client>/current/script/<script_name>`
 * Find out for sure if capistrano outputs nothing if log_level is set to "info"; possibly remove logging hack
