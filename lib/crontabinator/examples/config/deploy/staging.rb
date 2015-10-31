@@ -4,7 +4,7 @@ set :domain,                        "my-app.example.com"
 server fetch(:domain),
   :user                             => fetch(:deployment_username),
   :roles                            => ["cron"]
-set :user_crontab_entries,          {
+set :user_crontab_entries,          { # this must be set, even if an empty Hash
   "www-data"                          => [
     "SHELL=/bin/bash",
     "MAILTO=myemail@example.com",

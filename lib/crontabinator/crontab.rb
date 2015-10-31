@@ -24,19 +24,24 @@ namespace :crontab do
       end
 
       # User entries
-      fetch(:user_crontab_entries).each do |user, lines|
+      fetch(:user_crontab_entries, {}).each do |user, lines|
         user_crontab_hash[user] ||= []
         user_crontab_hash[user] << [lines]
       end
 
       # All entries
-      user_crontab_hash.each do |user, lines|
-        # Cron needs an extra return at the EOF, don't remove this
-        lines += ["\n"]
-        user_crontab_hash[user] = lines.flatten
-      end
+      user_crontab_hash.each { |user, lines| user_crontab_hash[user] = lines.flatten }
 
       set :user_crontab_hash, user_crontab_hash
+
+      # Newly removed crontabs
+      crontabs_to_remove = []
+      if File.exists?(fetch(:crontab_lockfile_path))
+        old_users = eval(File.read(fetch(:crontab_lockfile_path))).sort
+        new_users = user_crontab_hash.collect { |user, _| user }.sort
+        crontabs_to_remove = old_users - new_users
+      end
+      set :crontabs_to_remove, crontabs_to_remove
     end
   end
 
@@ -46,10 +51,10 @@ namespace :crontab do
         lines = File.read(path).lines.to_a
         lines.shift
         file = ERB.new(lines.join, nil, '-').result(binding)
+        as :root do execute("rm", "/tmp/script", "-f") end
         upload! StringIO.new(file), "/tmp/script"
         final_path = "#{fetch(:crontab_server_scripts_path)}/#{File.basename(path, '.erb')}"
         as :root do
-          warn "final path is " + final_path
           execute("mv", "/tmp/script", final_path)
           execute("chmod", "750", final_path)
         end
@@ -58,12 +63,13 @@ namespace :crontab do
   end
 
   desc "Idempotently setup Crontabs."
-  task :setup => [:read_all_settings, :upload_scripts] do
+  task :setup => ['crontab:check:settings', :read_all_settings, :upload_scripts] do
     log_level = SSHKit.config.output_verbosity
     log_level = "info" if log_level.nil?
     SSHKit.config.output_verbosity = fetch(:crontab_log_level)
 
     on roles(:cron) do |host|
+      # New
       fetch(:user_crontab_hash).each do |user, lines|
         unless unix_user_exists?(user)
           error "You defined crontab settings for '#{user}', but no such user exists - Skipping!"
@@ -71,17 +77,31 @@ namespace :crontab do
           set :crontab_entries, lines
           path = File.expand_path("./#{fetch(:crontab_templates_path)}/crontab.erb")
           file = ERB.new(File.read(path), nil, '-').result(binding)
+          as :root do execute("rm", "/tmp/crontab", "-f") end
           upload! StringIO.new(file), "/tmp/crontab"
-          as :root do
-            execute("chown", "#{user}:#{user}", "/tmp/crontab")
-          end
-          as user do
-            execute "crontab", "/tmp/crontab"
-          end
+          as :root do execute("chown", "#{user}:#{user}", "/tmp/crontab") end
+          as user do execute "crontab", "/tmp/crontab" end
           as :root do
             execute "rm", "/tmp/crontab"
           end
         end
+      end
+
+      # Old
+      fetch(:crontabs_to_remove).each do |user|
+        as :root do
+          execute "crontab", "-u", user, "-r"
+        end
+      end
+      content = [
+        "# Add this file to version control, - it tracks and removes crontab",
+        "#   entries on the server which you have removed from the config",
+        fetch(:user_crontab_hash).collect { |u, _| u }.sort.to_s
+      ].join("\n") + "\n"
+      unless File.exists?(fetch(:crontab_lockfile_path)) &&
+          File.read(fetch(:crontab_lockfile_path)) == content
+        File.open(fetch(:crontab_lockfile_path), 'w') { |f| f.write(content) }
+        warn "Updated '#{fetch(:crontab_lockfile_path)}', add it to version control"
       end
     end
     SSHKit.config.output_verbosity = log_level
