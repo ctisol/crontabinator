@@ -25,5 +25,4 @@ This is a Capistrano 3.x plugin, and relies on SSH access with passwordless sudo
 * You can add the `--trace` option at the end of a command to see when which tasks are invoked, and when which task is actually executed.
 
 ###### TODO:
-* Add a locking mechanism (lock file?) for detecting and removing crons on the server which have been removed from the Capistrano config.
 * Find out for sure if capistrano outputs nothing if log_level is set to "info"; possibly remove logging hack

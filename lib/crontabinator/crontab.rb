@@ -18,7 +18,7 @@ namespace :crontab do
         user_crontab_hash[entry[:user]] ||= []
         user_crontab_hash[entry[:user]] << [
           "# #{name}",
-          "#{entry[:schedule]} #{entry[:path]} >> #{fetch(:crontab_logs_path)}/#{name} 2>&1",
+          "#{entry[:schedule]} #{entry[:path]} >> #{fetch(:crontab_logs_path)}/#{name}.log 2>&1",
           ""
         ]
       end
