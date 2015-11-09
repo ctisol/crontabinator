@@ -64,10 +64,6 @@ namespace :crontab do
 
   desc "Idempotently setup Crontabs."
   task :setup => ['crontab:check:settings', :read_all_settings, :upload_scripts] do
-    log_level = SSHKit.config.output_verbosity
-    log_level = "info" if log_level.nil?
-    SSHKit.config.output_verbosity = fetch(:crontab_log_level)
-
     on roles(:cron) do |host|
       # New
       fetch(:user_crontab_hash).each do |user, lines|
@@ -104,7 +100,6 @@ namespace :crontab do
         warn "Updated '#{fetch(:crontab_lockfile_path)}', add it to version control"
       end
     end
-    SSHKit.config.output_verbosity = log_level
   end
 
   if Rake::Task.task_defined?("deploy:publishing")
@@ -113,10 +108,6 @@ namespace :crontab do
 
   desc "Check the status of the Crontabs."
   task :status => [:read_all_settings] do
-    log_level = SSHKit.config.output_verbosity
-    log_level = "info" if log_level.nil?
-    SSHKit.config.output_verbosity = fetch(:crontab_log_level)
-
     on roles(:cron) do
       fetch(:user_crontab_hash).each do |user, _|
         as :root do
@@ -128,8 +119,6 @@ namespace :crontab do
         end
       end
     end
-
-    SSHKit.config.output_verbosity = log_level
   end
 
 end
