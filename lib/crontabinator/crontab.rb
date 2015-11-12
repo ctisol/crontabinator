@@ -1,7 +1,7 @@
 namespace :crontab do
 
   # sets :user_crontab_hash in the form:
-  # { :"user" => ["#!/bin/bash", "/bin/echo 'asdf' >> /tmp/test.log"] }
+  # { :"username" => ["#!/bin/bash", "/bin/echo 'asdf' >> /tmp/test.log"] }
   task :read_all_settings => ['crontab:check:scripts'] do
     run_locally do
       user_crontab_hash = {}
@@ -9,9 +9,12 @@ namespace :crontab do
       # Auto entries
       auto_entries = []
       fetch(:crontab_script_files).each do |file|
-        hash = eval(File.read(file).lines.to_a.shift)
-        path = "#{fetch(:crontab_server_scripts_path)}/#{File.basename(file, '.erb')}"
-        auto_entries += [{ :user => hash[:user], :schedule => hash[:schedule], :path => path }]
+        hash = eval(File.read(file).lines.to_a.shift).deep_symbolize_keys
+        hash[:stages] = hash[:stages].collect { |stage| stage.to_sym }
+        if hash[:stages].include? fetch(:stage)
+          path = "#{fetch(:crontab_server_scripts_path)}/#{File.basename(file, '.erb')}"
+          auto_entries += [{ :user => hash[:user], :schedule => hash[:schedule], :path => path }]
+        end
       end
       auto_entries.each do |entry|
         name = File.basename(entry[:path], '.erb')
@@ -49,14 +52,17 @@ namespace :crontab do
     on roles(:cron) do |host|
       fetch(:crontab_script_files).each do |path|
         lines = File.read(path).lines.to_a
-        lines.shift
-        file = ERB.new(lines.join, nil, '-').result(binding)
-        as :root do execute("rm", "/tmp/script", "-f") end
-        upload! StringIO.new(file), "/tmp/script"
-        final_path = "#{fetch(:crontab_server_scripts_path)}/#{File.basename(path, '.erb')}"
-        as :root do
-          execute("mv", "/tmp/script", final_path)
-          execute("chmod", "750", final_path)
+        hash = eval(lines.shift).deep_symbolize_keys
+        hash[:stages] = hash[:stages].collect { |stage| stage.to_sym }
+        if hash[:stages].include? fetch(:stage).to_sym
+          file = ERB.new(lines.join, nil, '-').result(binding)
+          as :root do execute("rm", "/tmp/script", "-f") end
+          upload! StringIO.new(file), "/tmp/script"
+          final_path = "#{fetch(:crontab_server_scripts_path)}/#{File.basename(path, '.erb')}"
+          as :root do
+            execute("mv", "/tmp/script", final_path)
+            execute("chmod", "750", final_path)
+          end
         end
       end
     end
@@ -86,7 +92,7 @@ namespace :crontab do
       # Old
       fetch(:crontabs_to_remove).each do |user|
         as :root do
-          execute "crontab", "-u", user, "-r"
+          test "crontab", "-u", user, "-r"
         end
       end
       content = [

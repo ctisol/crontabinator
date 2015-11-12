@@ -6,11 +6,11 @@ namespace :crontab do
         files = Dir.glob("#{fetch(:crontab_scripts_path)}/*\.erb")
         set :crontab_script_files, files.collect { |f| File.expand_path(f) }
         fetch(:crontab_script_files).each do |file|
-          hash = eval(File.read(file).lines.to_a.shift)
-          if hash.nil? or hash[:user].nil? or hash[:schedule].nil?
+          hash = eval(File.read(file).lines.to_a.shift).deep_symbolize_keys
+          if hash.nil? or hash[:user].nil? or hash[:schedule].nil? or hash[:stages].nil?
             fatal "Error reading the first line of #{file}"
             fatal "Ensure the first line is a Ruby hash in the form: " +
-              "\"{ :user => \"www-data\", :schedule => \"* * * * *\" }\""
+              "\"{ :user => \"www-data\", :schedule => \"* * * * *\", :stages => [:production, :staging] }\""
             fatal "Your shebang line directly next"
             exit
           end
@@ -49,5 +49,13 @@ namespace :crontab do
       end
     end
 
+  end
+end
+
+class Object
+  def deep_symbolize_keys
+    return self.inject({}){|memo,(k,v)| memo[k.to_sym] = v.deep_symbolize_keys; memo} if self.is_a? Hash
+    return self.inject([]){|memo,v    | memo           << v.deep_symbolize_keys; memo} if self.is_a? Array
+    return self
   end
 end
