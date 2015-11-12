@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'crontabinator'
-  s.version     = '0.0.3'
+  s.version     = '0.0.4'
   s.date        = '2015-11-11'
   s.summary     = "Deploy Crontabs"
   s.description = "Deploy Crontabs using an existing Cron Daemon"
