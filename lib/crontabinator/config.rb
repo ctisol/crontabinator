@@ -16,7 +16,7 @@ namespace :crontabinator do
   set :example, "_example"
 
   desc "Write example config files (with '_example' appended to their names)."
-  task :write_example_configs do
+  task :write_example_configs => 'deployinator:load_settings' do
     run_locally do
       execute "mkdir", "-p", "config/deploy", fetch(:crontab_templates_path), fetch(:crontab_scripts_path)
       {
@@ -38,14 +38,14 @@ namespace :crontabinator do
 
   desc 'Write example config files (will overwrite any existing config files).'
   namespace :write_example_configs do
-    task :in_place do
+    task :in_place => 'deployinator:load_settings' do
       set :example, ""
       Rake::Task['crontabinator:write_example_configs'].invoke
     end
   end
 
   desc 'Write a file showing the built-in overridable settings.'
-  task :write_built_in do
+  task :write_built_in => 'deployinator:load_settings' do
     run_locally do
       {
         'built-in.rb'                         => 'built-in.rb',

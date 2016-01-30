@@ -2,7 +2,7 @@ namespace :crontab do
 
   # sets :user_crontab_hash in the form:
   # { :"username" => ["#!/bin/bash", "/bin/echo 'asdf' >> /tmp/test.log"] }
-  task :read_all_settings => ['crontab:check:scripts'] do
+  task :read_all_settings => ['deployinator:load_settings', 'crontab:check:scripts'] do
     run_locally do
       user_crontab_hash = {}
 
@@ -48,7 +48,7 @@ namespace :crontab do
     end
   end
 
-  task :upload_scripts => [:read_all_settings] do
+  task :upload_scripts => ['deployinator:load_settings', :read_all_settings] do
     on roles(:cron) do |host|
       fetch(:crontab_script_files).each do |path|
         lines = File.read(path).lines.to_a
@@ -69,7 +69,7 @@ namespace :crontab do
   end
 
   desc "Idempotently setup Crontabs."
-  task :setup => ['crontab:check:settings', :read_all_settings, :upload_scripts] do
+  task :setup => ['deployinator:load_settings', 'crontab:check:settings', :read_all_settings, :upload_scripts] do
     on roles(:cron) do |host|
       # New
       fetch(:user_crontab_hash).each do |user, lines|
@@ -113,7 +113,7 @@ namespace :crontab do
   end
 
   desc "Check the status of the Crontabs."
-  task :status => [:read_all_settings] do
+  task :status => ['deployinator:load_settings', :read_all_settings] do
     on roles(:cron) do
       fetch(:user_crontab_hash).each do |user, _|
         as :root do

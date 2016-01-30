@@ -1,7 +1,7 @@
 namespace :crontab do
   namespace :check do
 
-    task :scripts do
+    task :scripts => 'deployinator:load_settings' do
       run_locally do
         files = Dir.glob("#{fetch(:crontab_scripts_path)}/*\.erb")
         set :crontab_script_files, files.collect { |f| File.expand_path(f) }
@@ -18,7 +18,7 @@ namespace :crontab do
       end
     end
 
-    task :erb_validity do
+    task :erb_validity => 'deployinator:load_settings' do
       run_locally do
         fetch(:crontab_script_files).each do |file|
           unless test "erb", "-x", "-T", "'-'", file, "|", "ruby", "-c"
@@ -43,7 +43,7 @@ namespace :crontab do
 
     namespace :settings do
       desc 'Print example crontabinator specific settings for comparison.'
-      task :print do
+      task :print => 'deployinator:load_settings' do
         set :print_all, true
         Rake::Task['crontab:check:settings'].invoke
       end
