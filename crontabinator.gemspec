@@ -4,8 +4,8 @@ Gem::Specification.new do |s|
   s.date        = '2015-11-11'
   s.summary     = "Deploy Crontabs"
   s.description = "Deploy Crontabs using an existing Cron Daemon"
-  s.authors     = ["david amick"]
-  s.email       = "davidamick@ctisolutionsinc.com"
+  s.authors     = ["Kishore", "Dhanesh"]
+  s.email       = "kishore@railsfactory.com"
   s.files       = [
     "lib/crontabinator.rb",
     "lib/crontabinator/crontab.rb",
@@ -21,10 +21,10 @@ Gem::Specification.new do |s|
   s.required_ruby_version  =                '>= 1.9.3'
   s.requirements           <<               "Cron Daemon"
   s.add_runtime_dependency 'capistrano',    '~> 3.2.1'
-  s.add_runtime_dependency 'deployinator',  '~> 0.2.0'
+  s.add_runtime_dependency 'deployinator'
   s.add_runtime_dependency 'rake',          '~> 10.3.2'
   s.add_runtime_dependency 'sshkit',        '~> 1.5.1'
   s.homepage    =
-    'https://github.com/snarlysodboxer/crontabinator'
+    'https://github.com/ctisol/crontabinator'
   s.license     = 'GNU'
 end
